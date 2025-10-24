@@ -126,6 +126,9 @@ class WinchKinematics:
         gcode.register_command(
             'M666', self.cmd_M666,
             desc="Toggle winch flex compensation. Use M666 F0/F1.")
+        gcode.register_command(
+            'M667', self.cmd_M667,
+            desc="Report flex compensation performance stats.")
         flex_ptr = self.flex_helper.get_ptr()
         if not flex_ptr:
             raise config.error("Failed to initialise winch flex helper")
@@ -241,5 +244,11 @@ class WinchKinematics:
         state = "enabled" if actual else "disabled"
         gcmd.respond_info(f"Winch flex compensation {state}.{extra_msg}")
 
+    def cmd_M667(self, gcmd):
+        self.flex_helper.ffi_lib.winch_flex_perf_report()
+        gcmd.respond_info("Flex performance report written to log.")
+
+
 def load_kinematics(toolhead, config):
     return WinchKinematics(toolhead, config)
+

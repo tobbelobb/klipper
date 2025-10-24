@@ -16,6 +16,28 @@
 #include "itersolve.h" // struct stepper_kinematics
 #include "trapq.h" // move_get_coord
 
+/// Performance measurement stuff
+#include <time.h>
+#include <stdint.h>
+#include <inttypes.h>
+static uint64_t flex_call_count = 0;
+static double total_flex_time_ms = 0.0;
+static double get_time_ms(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return ts.tv_sec * 1000.0 + ts.tv_nsec / 1e6;
+}
+void __visible
+winch_flex_perf_report(void) {
+    errorf("compute_flex calls=%" PRIu64 ", total=%.3f ms, avg=%.6f ms",
+           flex_call_count, total_flex_time_ms,
+           flex_call_count ? total_flex_time_ms / flex_call_count : 0.0);
+}
+/// End of Performance measurement stuff
+
+
+
+
 #define WINCH_MAX_ANCHORS 26
 #define EPSILON 1e-9
 #define G_ACCEL 9.81
@@ -573,6 +595,11 @@ static void
 compute_flex(struct winch_flex *wf, double x, double y, double z,
              double *distances, double *flex)
 {
+    /// Performance measurement stuff
+    double t0 = get_time_ms();
+    flex_call_count++;
+    /// End of Performance measurement stuff
+
     int num = wf->num_anchors;
     struct coord pos;
     pos.x = x;
@@ -600,6 +627,11 @@ compute_flex(struct winch_flex *wf, double x, double y, double z,
         double spring_k = wf->spring_constant / spring_length;
         flex[i] = forces[i] / spring_k;
     }
+
+    /// Performance measurement stuff
+    double t1 = get_time_ms();
+    total_flex_time_ms += (t1 - t0);
+    /// End of Performance measurement stuff
 }
 static double
 calc_position_common(struct winch_stepper *ws, struct move *m, double move_time)

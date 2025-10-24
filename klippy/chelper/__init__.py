@@ -151,6 +151,7 @@ defs_kin_rotary_delta = """
 """
 
 defs_kin_winch = """
+    void winch_flex_perf_report(void);
     struct winch_flex *winch_flex_alloc(void);
     void winch_flex_free(struct winch_flex *wf);
     void winch_flex_configure(struct winch_flex *wf, int num_anchors,
